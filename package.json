@@ -1,0 +1,33 @@
+{
+  "name": "stream_reader",
+  "version": "1.0.0",
+  "description": "A nodejs module for contact data blocks from multiple reading from stream such as tcp stream, file stream. You can use this module with another module: pack_parser, to handle tcp or udp data in nodejs socket IO, to contact, pack, unpack formated binary data. ",
+  "main": "stream_reader.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node test/test_stream_reader.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WestLuo74/stream_reader.git"
+  },
+  "keywords": [
+    "tcp",
+    "udp",
+    "protocol",
+    "binary",
+    "Buffer",
+    "read",
+    "contact",
+    "pack",
+    "unpack"
+  ],
+  "author": "west_luo",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/WestLuo74/stream_reader/issues"
+  },
+  "homepage": "https://github.com/WestLuo74/stream_reader#readme"
+}
