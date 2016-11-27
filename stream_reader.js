@@ -44,6 +44,10 @@ var StreamReader = function (bufferLimit) {
     var _tasks = []; //读取任务{type: 'once' | 'loop', total: xx, packLen:yy, index:zz, cbFunc: function() }
     var _curTask;
     
+    this.taskEmpty = function(){
+        return (_curTask == undefined) && (_tasks.length == 0);
+    };
+    
     function getDataFromBuffers(len)
     {
         var ret = new Buffer(len);
@@ -112,8 +116,15 @@ var StreamReader = function (bufferLimit) {
             refreshCurTask();
     }
     
+    var inShedule = false; //To avoid schedule recursively
+    
     function schedule(){
 
+        if(inShedule)
+            return;
+        else
+            inShedule = true;
+        
         if(!_curTask)
             refreshCurTask();
         
@@ -128,6 +139,8 @@ var StreamReader = function (bufferLimit) {
                 callLoopTask(_curTask);
             }            
         }
+        
+        inShedule = false;
     }
 
     /*流读取函数

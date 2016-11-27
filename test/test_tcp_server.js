@@ -23,10 +23,15 @@ function newConn(sock)
     
     sock.on("data", function(data){ 
         
+        console.info("Data come in: " + data.length + " bytes");
+        
+        //If no more task in StreamReader, register protocol handle body
+        if( sockStreamReader.taskEmpty() )
+            registerProtocolBody();
+        
         //When socket data coming, push to StreamReader
         sockStreamReader.push(data);
-        
-        console.info("Data come in: " + data.length);        
+                
     });
   
     sock.on("error",function(err){
@@ -37,73 +42,57 @@ function newConn(sock)
         console.error('connection closed');
     });
     
-    //Read pack head with fixed length 9 bytes
-    sockStreamReader.read(9, function(headData){
+    function registerProtocolBody(){
         
-        console.info("Pack head received");
-        
-        //Parse head to object head
-        var parserReader = PackParser.CreateReader(headData).bigEndian();
-        var head = parserReader.fstring('flag', 4).byte('type').UInt32('length').unpack(); 
-        
-        //Check flag field
-        if(head.flag != "Test"){ 
-            console.error("Bad pack flag" + head.flag);
-            return;
-        }
-        
-        switch( head.type ){
-            case PACK_TYPE_ECHO:
-                
-                //Read data according head.length
-                sockStreamReader.read(head.length, function(data){
-                    
-                    var dataStr = data.toString();
-                    console.info("Echo pack coming with string: " + dataStr);
-                    
-                    //Build a echo pack to send
-                    var paserWriter = PackParser.CreateWriter().bigEndian();
-                    var outPack = paserWriter.fstring(head.flag).byte(head.type).UInt32(data.length).fstring(dataStr).pack();
-                    sock.write(outPack);
-                });
-                break;
-                    
-            case PACK_TYPE_STR:
-                
-                //This a example for read a long data, avoid push too much data in StreamReader
-                var total = head.length;
-                var readLen = 0;
-                var lenLeft = total - readlen;
-                
-                function readLongData(){
-                    
-                    var len = 1024;
-                    lenLeft = total - readlen;
-                    if(lenLeft < len)
-                        len = lenLeft;
-                    
-                    //Read max 1K data
-                    sockStreamReader.read(len, function(data){
-                        
-                        //So you can handle data as your wish
+        //Read pack head with fixed length 9 bytes
+        sockStreamReader.read(9, function(headData){
+
+            console.info("Pack head received");
+
+            //Parse head to object head
+            var parserReader = PackParser.CreateReader(headData).bigEndian();
+            var head = parserReader.fstring('flag', 4).byte('type').UInt32('length').unpack(); 
+
+            //Check flag field
+            if(head.flag != "Test"){ 
+                console.error("Bad pack flag" + head.flag);
+                return;
+            }
+
+            switch( head.type ){
+                case PACK_TYPE_ECHO:
+
+                    //Read data according head.length
+                    sockStreamReader.read(head.length, function(data){
+
                         var dataStr = data.toString();
-                        console.info("Long data pack in " + readLen + "/" + total + ": " + dataStr);
-                        
-                        //writeToFile(data);
-                        
-                        readLen += data.length();
-                        if(readLen < total)
-                            readLongData(); //read again
-                        else
-                            console.info("Long data pack finished");
+                        console.info("Echo pack coming with string: " + dataStr);
+
+                        //Build a echo pack to send
+                        var paserWriter = PackParser.CreateWriter().bigEndian();
+                        var outPack = paserWriter.fstring(head.flag).byte(head.type).UInt32(data.length).fstring(dataStr).pack();
+                        sock.write(outPack);
                     });
-        
-                };
-                    
-                readLongData();
-                break;
-        }
-    });
+                    break;
+
+                case PACK_TYPE_STR:
+
+                    var total = 0;
+                    sockStreamReader.loopRead(head.length, 1024, function(data){
+
+                        var dataStr = data.toString();                        
+                        console.info("Long data pack come in: " + dataStr);
+                        
+                        total += data.length;
+                        if(total == head.length)
+                            console.info("Long data finished!");
+                        //So you can handle data as your wish
+                    }); 
+                    break;
+            }
+        });
+    }
+   
 }
 
 function createSrv(port){
@@ -113,7 +102,7 @@ function createSrv(port){
     });
     
     server.on('connection', function(socket) {
-        conn = newConn(socket);
+        newConn(socket);
         console.info('Server has a new connection');
     });
     

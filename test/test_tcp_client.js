@@ -32,8 +32,22 @@ client.connect(PORT, HOST, function() {
     var paserWriter = PackParser.CreateWriter().bigEndian();
     var dataStr = "Hello, world!"
     var outPack = paserWriter.fstring("Test").byte(PACK_TYPE_ECHO).UInt32(dataStr.length).fstring(dataStr).pack();
-    console.log('Send ' + outPack.length + ' TO: ' + HOST + ':' + PORT);
+    console.log('Send ' + outPack.length + ' bytes TO: ' + HOST + ':' + PORT);
     client.write(outPack);
+    
+    var loopStr = "This is a test loop string";
+    var dataLen = Buffer.byteLength(loopStr, paserWriter.getEncoding()) * 1024;
+    
+    //Pack and send head
+    outPack = paserWriter.fstring("Test").byte(PACK_TYPE_STR).UInt32(dataLen).pack();    
+    console.log('Send ' + outPack.length + ' head bytes TO: ' + HOST + ':' + PORT);
+    client.write(outPack);
+    
+    //Send data
+    for(var i = 0; i < 1024; i++){
+        var data = new Buffer(loopStr, paserWriter.getEncoding());
+        client.write(data);
+    }
 
     setTimeout(function(){ //Close after 10 seconds
         
@@ -43,12 +57,15 @@ client.connect(PORT, HOST, function() {
 
 
 client.on('data', function(data) {
-
+    
+    //If no more task in StreamReader, register protocol handle body
+    if( sockStreamReader.taskEmpty() )
+        registerProtocolBody();
+    
      //When socket data coming, push to StreamReader
     sockStreamReader.push(data);    
 });
 
-// 为客户端添加“close”事件处理函数
 client.on('close', function() {
     console.log('Connection closed');
 });
@@ -57,29 +74,32 @@ client.on("error",function(err){
     console.error('Error occurred:', err.message);
 });
 
-sockStreamReader.read(9, function(headData){
-        
-    //Parse head to object head
-    var parserReader = PackParser.CreateReader(headData).bigEndian();
-    var head = parserReader.fstring('flag', 4).byte('type').UInt32('length').unpack(); 
-        
-    //Check flag field
-    if(head.flag != "Test"){ 
-        console.error("Bad pack flag" + head.flag);
-        return;
-    }
-        
-    switch( head.type ){
-        case PACK_TYPE_ECHO:
-        
-            //Read data according head.length
-            sockStreamReader.read(head.length, function(data){
-                
-                var dataStr = data.toString();
-                console.info("Echo pack coming with string: " + dataStr);
-            });
-            break;
-        default:
-            console.error("Unrecongized pack type: " + head.type);                                
-    }
-});
+function registerProtocolBody(){
+    
+    sockStreamReader.read(9, function(headData){
+
+        //Parse head to object head
+        var parserReader = PackParser.CreateReader(headData).bigEndian();
+        var head = parserReader.fstring('flag', 4).byte('type').UInt32('length').unpack(); 
+
+        //Check flag field
+        if(head.flag != "Test"){ 
+            console.error("Bad pack flag" + head.flag);
+            return;
+        }
+
+        switch( head.type ){
+            case PACK_TYPE_ECHO:
+
+                //Read data according head.length
+                sockStreamReader.read(head.length, function(data){
+
+                    var dataStr = data.toString();
+                    console.info("Echo pack coming with string: " + dataStr);
+                });
+                break;
+            default:
+                console.error("Unrecongized pack type: " + head.type);                                
+        }
+    });
+}
