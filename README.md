@@ -1,5 +1,5 @@
 # stream_reader
-
+```
 //This is a full example for a tcp client using stream_reader and pack_parser package.
 //The pack format is: 
 //
@@ -105,7 +105,8 @@ function registerProtocolBody(){
         }
     });
 }
-
+```
+```
 //This is a full example for a tcp server using stream_reader and pack_parser package.
 //The pack format is: 
 //
@@ -228,5 +229,5 @@ function createSrv(port){
 
 createSrv(8888);
 
-
+```
 
