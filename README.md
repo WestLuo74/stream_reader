@@ -73,7 +73,6 @@ sockStreamReader.loopRead(1024*2048, 1024, function(data){
         console.info("Long data finished!");
 }
 ```
-#
 # pack_parser
 
 ## Install
