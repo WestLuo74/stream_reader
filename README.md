@@ -1,3 +1,4 @@
+# stream_reader
 # [stream_reader](https://www.npmjs.com/package/stream_reader) and [pack_parser](https://www.npmjs.com/package/pack_parser)
 Stream_reader handles continuous data blocks from sock or file. It will buffering the data blocks you pushed in. When the data reached the length you want, it contact data to a Buffer object and call back the function you registered.
 
@@ -101,24 +102,25 @@ console.log(buff);
 ```
 Output as following:
 ```
-<Buffer 03 00 00 00 0c>
+<  03 00 00 00 0c>
 ```
 ### unpack()
 The function unpack() will unpackage nodeJs Buffer to a javascript object with fields you gave with field functions such as byte(), UInt32(), etc.
 ```js
-//buff value: <Buffer 03 00 00 00 0c>
+//buff value: < Buffer 03 00 00 00 0c >
 var reader = PackParser.CreateReader(buff);
 var ret = reader.byte('Field0').UInt32('Field1').bigEndian().unpack();
 console.log(ret);
+```
 
-```
 Output as following:  
-```
+```js
 {  
   Field0: 3,
   Field1: 12  
 }
 ```
+  
 ### Field functions
 Now field functions include:   
 ```
@@ -155,7 +157,7 @@ console.log(pack);
 ```
 Output as following:  
 ```
-<Buffer 00 00 00 0d 31 32 33 34 35 36 37 38 39 30 31 32 33>
+< Buffer 00 00 00 0d 31 32 33 34 35 36 37 38 39 30 31 32 33 >
 ```
 For a reader, function string() will read 4 byte string length(in bytes) firstly, and then read string body according to this length.
 ```js
@@ -186,8 +188,8 @@ console.log(pack);
 ```
 Output as following:  
 ```
-<Buffer 31 32 33 34 00 00 00 00 00 00>
-<Buffer 31 32 33 34 35 36 37 38 39 30>
+< Buffer 31 32 33 34 00 00 00 00 00 00 >
+< Buffer 31 32 33 34 35 36 37 38 39 30 >
 ```
 For writer, if fixedLength is undefined, fixedLength is the string's length(in bytes); and for the the reader, fixedLength must be specified when calling this function.
 
